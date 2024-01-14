@@ -10,7 +10,7 @@ class JobState:
         self.last_position = 'Sitting'
         self.last_change_time = time.time()
 
-    def job(self):
+    def capture_and_process(self):
         img_name = capture_image()
         classification = classify_image(model, img_name)
         print(classification)

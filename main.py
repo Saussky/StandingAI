@@ -1,10 +1,9 @@
 import schedule
 import time
-from utils import classify_image, capture_image, update_csv
 from classes import JobState
 
 job_state = JobState()
-schedule.every(10).seconds.do(job_state.job)
+schedule.every(1).minutes.do(job_state.capture_and_process)
 
 while True:
     schedule.run_pending()
