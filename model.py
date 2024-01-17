@@ -4,11 +4,11 @@ from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.preprocessing import image # TODO: same import? might be a bit redundant
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import matplotlib.pyplot as plt
 
 image_path = './images'
-batch_size = 5
 
-# Initialize an image data generator with some data augmentation
+# Genrate training data with data augmentation
 train_datagen = ImageDataGenerator(
     rescale=1./255,
     rotation_range=40,
@@ -41,6 +41,7 @@ validation_generator = train_datagen.flow_from_directory(
 )
 
 base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+
 for layer in base_model.layers:
     layer.trainable = False
 
@@ -62,3 +63,22 @@ history = model.fit(
     validation_steps=validation_generator.samples // validation_generator.batch_size,
     callbacks=[EarlyStopping(monitor='val_loss', patience=10)]
 )
+
+
+# Plot training and validation accuracy
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('Model Accuracy')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+plt.legend(['Train', 'Validation'], loc='upper left')
+plt.savefig('accuracy_graph.png')
+
+# Plot training and validation loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model Loss')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.legend(['Train', 'Validation'], loc='upper left')
+plt.savefig('loss_graph.png')

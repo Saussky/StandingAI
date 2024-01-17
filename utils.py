@@ -57,7 +57,6 @@ def capture_image():
     return image_name
 
 def update_csv(date, duration, csv_path='data.csv'):
-    # Define the fieldnames according to the new structure
     fieldnames = ['date', 'standing_duration_1', 'standing_duration_2', 'standing_duration_3', 
                   'standing_duration_4', 'standing_duration_5', 'total_sessions', 'total_standing_minutes']
 
@@ -100,5 +99,5 @@ def update_csv(date, duration, csv_path='data.csv'):
             new_row['date'] = date
             new_row['standing_duration_1'] = str(duration)
             new_row['total_sessions'] = '1'
-            new_row['total_standing_minutes'] = str(duration)
+            new_row['total_standing_minutes'] = str(sum(int(row.get(f'standing_duration_{i}', '0')) for i in range(1, 6)) + duration)
             writer.writerow(new_row)
