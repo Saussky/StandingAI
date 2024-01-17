@@ -11,18 +11,20 @@ class JobState:
         self.last_change_time = time.time()
 
     def capture_and_process(self):
-        img_name = capture_image()
-        classification = classify_image(model, img_name)
-        print(classification)
+        try:
+            img_name = capture_image()
+            current_time = time.time()
+            classification = classify_image(model, img_name)
 
-        current_time = time.time()
+            print(f'You are : {classification}')
 
-        if classification != self.last_position and self.last_position == 'Standing':
-            duration = round((current_time - self.last_change_time) / 60)
-            date = datetime.now().strftime("%Y-%m-%d")
-            update_csv(date, duration)
-            self.last_change_time = current_time
+            if classification != self.last_position and self.last_position == 'Standing':
+                duration = round((current_time - self.last_change_time) / 60) # TODO: Check
+                date = datetime.now().strftime("%Y-%m-%d")
+                update_csv(date, duration)
+                self.last_change_time = current_time
 
-        self.last_position = classification
-        os.remove(img_name)
-
+            self.last_position = classification
+            os.remove(img_name)
+        except Exception as err:
+            print(f"An error occurred: {str(err)}")
