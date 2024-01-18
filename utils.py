@@ -99,5 +99,5 @@ def update_csv(date, duration, csv_path='data.csv'):
             new_row['date'] = date
             new_row['standing_duration_1'] = str(duration)
             new_row['total_sessions'] = '1'
-            new_row['total_standing_minutes'] = str(sum(int(row.get(f'standing_duration_{i}', '0')) for i in range(1, 6)) + duration)
+            new_row['total_standing_minutes'] = str(duration)
             writer.writerow(new_row)

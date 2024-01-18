@@ -20,7 +20,7 @@ train_datagen = ImageDataGenerator(
     brightness_range=[0.8, 1.2],
     channel_shift_range=20.0,
     fill_mode='nearest',
-    validation_split=0.2  # Split data into training (80%) and validation (20%)
+    validation_split=0.3  # Split data into training (80%) and validation (20%)
 )
 
 # Prepare training and validation data
@@ -58,7 +58,7 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 history = model.fit(
     train_generator,
     steps_per_epoch=train_generator.samples // train_generator.batch_size,
-    epochs=15,
+    epochs=30,
     validation_data=validation_generator,
     validation_steps=validation_generator.samples // validation_generator.batch_size,
     callbacks=[EarlyStopping(monitor='val_loss', patience=10)]

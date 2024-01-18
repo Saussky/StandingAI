@@ -20,6 +20,7 @@ class JobState:
 
             if classification != self.last_position and self.last_position == 'Standing':
                 duration = round((current_time - self.last_change_time) / 60) # TODO: Check
+                print(f'Standing duration: {duration} minutes')
                 date = datetime.now().strftime("%Y-%m-%d")
                 update_csv(date, duration)
                 self.last_change_time = current_time
