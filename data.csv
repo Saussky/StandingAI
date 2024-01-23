@@ -1,4 +1,2 @@
-date,standing_duration_1,standing_duration_2,standing_duration_3,standing_duration_4,standing_duration_5,total_sessions,total_standing_minutes
-2024-01-14,1,1,1,,,2,3
-2024-01-16,33,5,7,4,,3,49
-2024-01-17,24,77,32,70,17,5,446
+date,standing_duration,total_sessions,total_standing_minutes
+2024-01-23,15,2,15

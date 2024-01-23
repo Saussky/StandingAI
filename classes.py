@@ -1,6 +1,7 @@
 import os
 import time
 from datetime import datetime
+from gui import create_gui
 from utils import capture_image, classify_image, update_csv
 from model import model
 
@@ -19,7 +20,7 @@ class JobState:
             print(f'You are : {classification}')
 
             if classification != self.last_position and self.last_position == 'Standing':
-                duration = round((current_time - self.last_change_time) / 60) # TODO: Check
+                duration = round((current_time - self.last_change_time) / 60)
                 print(f'Standing duration: {duration} minutes')
                 date = datetime.now().strftime("%Y-%m-%d")
                 update_csv(date, duration)

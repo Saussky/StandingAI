@@ -5,6 +5,7 @@ import cv2
 import csv
 from tensorflow.keras.preprocessing import image
 import datetime
+from datetime import timedelta
 
 def load_and_preprocess_image(image_path, target_size=(224, 224)):
     img = image.load_img(image_path, target_size=target_size)
@@ -57,47 +58,70 @@ def capture_image():
     return image_name
 
 def update_csv(date, duration, csv_path='data.csv'):
-    fieldnames = ['date', 'standing_duration_1', 'standing_duration_2', 'standing_duration_3', 
-                  'standing_duration_4', 'standing_duration_5', 'total_sessions', 'total_standing_minutes']
+    fieldnames = ['date', 'standing_duration', 'total_sessions', 'total_standing_minutes']
+
+    # Initialize an empty list to store rows
+    rows = []
 
     # Check if the file exists and if today's date is already recorded
     data_exists = False
-    rows = []
-    try:
+    if os.path.exists(csv_path):
         with open(csv_path, 'r', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 if row['date'] == date:
                     data_exists = True
-                    session_count = 0
-                    for i in range(1, 6):
-                        session_key = f'standing_duration_{i}'
-                        if row[session_key] == '':
-                            row[session_key] = str(duration)
-                            break
-                        session_count += 1
-                    row['total_sessions'] = str(session_count)
-                    row['total_standing_minutes'] = str(int(row.get('total_standing_minutes', '0')) + duration)
+                    # Update the standing duration and total standing minutes for the existing date
+                    row['standing_duration'] = str(int(row['standing_duration']) + duration)
+                    row['total_sessions'] = str(int(row['total_sessions']) + 1)
+                    row['total_standing_minutes'] = str(int(row['total_standing_minutes']) + duration)
                 rows.append(row)
 
-    except FileNotFoundError:
-        # File doesn't exist, create it
+    # Create file if it doesn't exist
+    if not os.path.exists(csv_path):
         with open(csv_path, 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
 
-    # Update the file
+    # Update the file with modified data or add a new row
     with open(csv_path, 'w', newline='') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
-        for row in rows:
-            writer.writerow(row)
-
-        # If the date is not found, add a new row
-        if not data_exists:
-            new_row = {field: '' for field in fieldnames}
-            new_row['date'] = date
-            new_row['standing_duration_1'] = str(duration)
-            new_row['total_sessions'] = '1'
-            new_row['total_standing_minutes'] = str(duration)
+        if data_exists:
+            for row in rows:
+                writer.writerow(row)
+        else:
+            new_row = {
+                'date': date,
+                'standing_duration': str(duration),
+                'total_sessions': '1',
+                'total_standing_minutes': str(duration)
+            }
             writer.writerow(new_row)
+
+def read_csv_data(csv_path='data.csv'):
+    """
+    Read CSV data and return a list of dictionaries.
+    """
+    data = []
+    if not os.path.exists(csv_path):
+        return data
+
+    with open(csv_path, 'r', newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            data.append(row)
+    return data
+
+def get_weekly_stats(data, week_start):
+    """
+    Get total standing minutes and session count for the specified week.
+    """
+    total_minutes = 0
+    total_sessions = 0
+    for row in data:
+        row_date = datetime.datetime.strptime(row['date'], '%Y-%m-%d').date()
+        if week_start <= row_date < week_start + timedelta(days=7):
+            total_minutes += int(row['total_standing_minutes'])
+            total_sessions += int(row['total_sessions'])
+    return total_minutes, total_sessions
