@@ -34,8 +34,8 @@ After setting up the project and training the model:
 
 # Data Sorting
 
-*Images with lower confidence scores are stored in the to_sort folder.
-*Manually classify these images and move them to the appropriate folders to enhance the model's accuracy.
+* Images with lower confidence scores are stored in the to_sort folder.
+* Manually classify these images and move them to the appropriate folders to enhance the model's accuracy.
 
 # Note
 
