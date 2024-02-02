@@ -125,3 +125,46 @@ def get_weekly_stats(data, week_start):
             total_minutes += int(row['total_standing_minutes'])
             total_sessions += int(row['total_sessions'])
     return total_minutes, total_sessions
+
+def get_average_standing_duration(data):
+    """
+    Calculate the average standing duration for the specified week.
+    """
+    if not data:
+        return 0
+    total_standing_minutes = sum(int(row['total_standing_minutes']) for row in data)
+    total_sessions = sum(int(row['total_sessions']) for row in data)
+    average_duration = total_standing_minutes / total_sessions if total_sessions else 0
+    return average_duration
+
+def get_longest_standing_session(data):
+    longest_session = max(data, key=lambda x: int(x['standing_duration'])) if data else None
+    return longest_session['standing_duration'] if longest_session else 0
+
+def get_total_standing_days(data):
+    unique_days = {row['date'] for row in data}
+    return len(unique_days)
+
+
+def get_longest_standing_streak(data):
+    if not data:
+        return 0
+    sorted_dates = sorted({datetime.datetime.strptime(row['date'], '%Y-%m-%d').date() for row in data})
+    longest_streak = current_streak = 1
+    for i in range(1, len(sorted_dates)):
+        if (sorted_dates[i] - sorted_dates[i-1]).days == 1:
+            current_streak += 1
+            longest_streak = max(longest_streak, current_streak)
+        else:
+            current_streak = 1
+    return longest_streak
+
+
+def get_day_of_week_stats(data):
+    day_stats = {day: {'total_minutes': 0, 'total_sessions': 0} for day in range(7)}  # 0: Monday, 6: Sunday
+    for row in data:
+        row_date = datetime.datetime.strptime(row['date'], '%Y-%m-%d').date()
+        day_of_week = row_date.weekday()
+        day_stats[day_of_week]['total_minutes'] += int(row['total_standing_minutes'])
+        day_stats[day_of_week]['total_sessions'] += int(row['total_sessions'])
+    return day_stats

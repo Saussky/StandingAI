@@ -30,3 +30,6 @@ class JobState:
             os.remove(img_name)
         except Exception as err:
             print(f"An error occurred: {str(err)}")
+
+    # def open(self):
+    #     create_gui()

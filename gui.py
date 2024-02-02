@@ -1,12 +1,28 @@
+import sys
 import datetime
-import tkinter as tk
 from datetime import timedelta
+from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 
-from utils import get_weekly_stats, read_csv_data
+from utils import get_average_standing_duration, get_day_of_week_stats, get_longest_standing_session, get_longest_standing_streak, get_total_standing_days, get_weekly_stats, read_csv_data
+
+def create_heading_label(text):
+    label = QLabel(text)
+    label.setFont(QFont('Arial', 16, QFont.Bold))
+    label.setStyleSheet("color: #2F4F4F; margin-top: 20px; margin-bottom: 5px;")
+    return label
+
+def create_stat_label(text):
+    label = QLabel(text)
+    label.setStyleSheet("background-color: #F0FFFF; color: black; padding: 5px; border-radius: 5px; margin: 2px;")
+    return label
 
 def create_gui():
-    window = tk.Tk()
-    window.title("Standing Tracker")
+    app = QApplication(sys.argv)
+    window = QWidget()
+    window.setWindowTitle("Standing Tracker")
+    window.setStyleSheet("background-color: #E0EEEE; padding: 10px;")
 
     data = read_csv_data('data.csv')
     today = datetime.date.today()
@@ -20,23 +36,36 @@ def create_gui():
     last_week_minutes, _ = get_weekly_stats(data, last_week_start)
     weekly_difference = this_week_minutes - last_week_minutes
 
-    # Today's stats
-    today_label = tk.Label(window, text=f"Today's Total Standing Duration: {today_data['total_standing_minutes'] if today_data else '0'} minutes")
-    today_label.pack()
+    layout = QVBoxLayout()
 
-    today_sessions_label = tk.Label(window, text=f"Today's Session Count: {today_data['total_sessions'] if today_data else '0'}")
-    today_sessions_label.pack()
+    # Apply styled headings and stats
+    layout.addWidget(create_heading_label("Today's Statistics"))
+    layout.addWidget(create_stat_label(f"Today's Total Standing Duration: {today_data['total_standing_minutes'] if today_data else '0'} minutes"))
+    layout.addWidget(create_stat_label(f"Today's Session Count: {today_data['total_sessions'] if today_data else '0'}"))
 
-    # This week's stats
-    week_label = tk.Label(window, text=f"This Week's Total Standing Duration: {this_week_minutes} minutes")
-    week_label.pack()
+    layout.addWidget(create_heading_label("Weekly Summary"))
+    layout.addWidget(create_stat_label(f"This Week's Total Standing Duration: {this_week_minutes} minutes"))
+    layout.addWidget(create_stat_label(f"Difference from Last Week: {weekly_difference} minutes"))
 
-    week_sessions_label = tk.Label(window, text=f"This Week's Session Count: {this_week_sessions}")
-    week_sessions_label.pack()
+    # Additional statistics with styled labels
+    layout.addWidget(create_heading_label("Additional Insights"))
+    layout.addWidget(create_stat_label(f"Average Standing Duration per Session: {get_average_standing_duration(data)} minutes"))
+    layout.addWidget(create_stat_label(f"Longest Standing Session: {get_longest_standing_session(data)} minutes"))
+    layout.addWidget(create_stat_label(f"Total Standing Days: {get_total_standing_days(data)}"))
+    layout.addWidget(create_stat_label(f"Longest Standing Streak: {get_longest_standing_streak(data)} days"))
 
-    # Last week's comparison
-    comparison_label = tk.Label(window, text=f"Difference from Last Week: {weekly_difference} minutes")
-    comparison_label.pack()
+    # Day of Week Stats with Styling
+    layout.addWidget(create_heading_label("Day of Week Analysis"))
+    day_of_week_stats_data = get_day_of_week_stats(data)
+    for day, stats in day_of_week_stats_data.items():
+        day_name = datetime.datetime(2024, 1, day + 1).strftime('%A')  # Temporary solution to get day name
+        layout.addWidget(create_stat_label(f"{day_name}: {stats['total_minutes']} minutes over {stats['total_sessions']} sessions"))
 
-    window.mainloop()
+    window.setLayout(layout)
+    window.show()
+    sys.exit(app.exec_())
 
+if __name__ == '__main__':
+    create_gui()
+
+create_gui()
