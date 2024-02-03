@@ -80,7 +80,7 @@ def create_gui():
     window.show()
     sys.exit(app.exec_())
 
-if __name__ == '__main__':
-    create_gui()
+# if __name__ == '__main__':
+#     create_gui()
 
-create_gui()
+# create_gui()

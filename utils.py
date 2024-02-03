@@ -6,6 +6,11 @@ import csv
 from tensorflow.keras.preprocessing import image
 import datetime
 from datetime import timedelta
+import matplotlib.patches as patches
+from PIL import Image
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 def load_and_preprocess_image(image_path, target_size=(224, 224)):
     img = image.load_img(image_path, target_size=target_size)
@@ -168,3 +173,53 @@ def get_day_of_week_stats(data):
         day_stats[day_of_week]['total_minutes'] += int(row['total_standing_minutes'])
         day_stats[day_of_week]['total_sessions'] += int(row['total_sessions'])
     return day_stats
+
+def crop_top_middle(image_array):
+    """
+    There is a mark on my wall only visible when desk is in standing position, this captures that general area.
+    It returns only the cropped area, making the job easier for the model.
+    """
+    height, width = image_array.shape[:2]
+    start_row = 0
+    start_col = width // 8
+    end_row = height // 3
+    end_col = 2 * width // 4
+    return image_array[start_row:end_row, start_col:end_col, :]
+
+
+def show_scrop_top_middle():
+    # Load your images
+    image_path1 = './images/standing/standing18.jpg'
+    image_path2 = './images/standing/standing19.jpg'
+    image1 = Image.open(image_path1)
+    image2 = Image.open(image_path2)
+    image_array1 = np.array(image1)
+    image_array2 = np.array(image2)
+    height1, width1 = image_array1.shape[:2]
+    height2, width2 = image_array2.shape[:2]
+
+    # Crop the images
+    cropped_image_array1 = crop_top_middle(image_array1)
+    cropped_image_array2 = crop_top_middle(image_array2)
+
+    # Visualize the crops
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    # Original images with the crop areas marked
+    ax1.imshow(image_array1)
+    rect1 = patches.Rectangle((width1 // 4, 0), width1 // 2, height1 // 2, linewidth=1, edgecolor='r', facecolor='none')
+    ax1.add_patch(rect1)
+    ax1.set_xlim(0, width1)
+    ax1.set_ylim(height1, 0)  # Reverse the y-axis
+
+    ax2.imshow(image_array2)
+    rect2 = patches.Rectangle((width2 // 4, 0), width2 // 2, height2 // 2, linewidth=1, edgecolor='r', facecolor='none')
+    ax2.add_patch(rect2)
+    ax2.set_xlim(0, width2)
+    ax2.set_ylim(height2, 0)  # Reverse the y-axis
+
+    # Cropped images
+    fig, (ax3, ax4) = plt.subplots(1, 2, figsize=(12, 6))
+    ax3.imshow(cropped_image_array1)
+    ax4.imshow(cropped_image_array2)
+
+    plt.show()

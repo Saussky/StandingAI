@@ -5,6 +5,7 @@ from gui import create_gui
 from utils import capture_image, classify_image, update_csv
 from model import model
 
+# TODO: If prediction goes from standing - sitting - standiing, it's likely the middle prediction is wrong.
 
 class JobState:
     def __init__(self):
