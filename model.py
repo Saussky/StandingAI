@@ -1,5 +1,7 @@
+from matplotlib import patches
 import tensorflow as tensorflow
 import tensorflow as tf
+
 from tensorflow.keras import layers, models
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.callbacks import EarlyStopping
@@ -9,8 +11,13 @@ from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 import numpy as np
 import matplotlib.pyplot as plt
 
-image_path = './images'
+from PIL import Image
+import tensorflow as tf
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
+
+
+image_path = './images'
 
 def crop_and_preprocess(image_array, target_size=(224, 224)):
     """
@@ -27,19 +34,107 @@ def crop_and_preprocess(image_array, target_size=(224, 224)):
     # Crop the image
     height, width = image_array.shape[:2]
     start_row = 0
-    start_col = width // 8
-    end_row = height // 3
-    end_col = 7 * width // 8  # Adjusted to ensure the cropped area maintains aspect ratio
+    start_col = width // 8  # Start column at 1/8th of the width from the left
+    end_row = height // 3   # End row at 1/3rd of the height from the top
+    end_col = 7 * width // 8  # End column at 7/8th of the width from the left
+
+    # Ensure the coordinates are within the image dimensions
+    start_col = max(0, start_col)
+    start_row = max(0, start_row)
+    end_col = min(width, end_col)
+    end_row = min(height, end_row)
+    
     cropped_image = image_array[start_row:end_row, start_col:end_col, :]
     
+    # Convert the cropped image to float32 to prepare for resizing and preprocessing
+    cropped_image = cropped_image.astype('float32')
+
     # Resize the cropped image to the target size
     resized_image = tf.image.resize(cropped_image, target_size)
-    
+
     # Apply MobileNetV2 preprocessing
     preprocessed_image = preprocess_input(resized_image)
     
-    return preprocessed_image.numpy()  # Convert back to NumPy array if needed
+    return preprocessed_image
 
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from PIL import Image
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+
+def crop_image_for_visualization(image_array):
+    """
+    Crop the image to focus on the specific area of interest.
+
+    Args:
+    - image_array: The image array (NumPy array).
+
+    Returns:
+    - The cropped image array (NumPy array).
+    """
+    height, width = image_array.shape[:2]
+    start_row = 0
+    start_col = width // 8
+    end_row = height // 3
+    end_col = 7 * width // 8
+    
+    # Ensure the coordinates are within the image dimensions
+    start_col = max(0, start_col)
+    start_row = max(0, start_row)
+    end_col = min(width, end_col)
+    end_row = min(height, end_row)
+    
+    cropped_image = image_array[start_row:end_row, start_col:end_col, :]
+    return cropped_image
+
+def show_cropped_images(image_paths, crop_function):
+    """
+    Displays the original and cropped images side by side without preprocessing.
+
+    Args:
+    - image_paths: A list of file paths to the images.
+    - crop_function: A function that crops the images.
+    """
+    fig, axs = plt.subplots(2, len(image_paths), figsize=(12, 6))
+    
+    for i, image_path in enumerate(image_paths):
+        # Load the image
+        image = Image.open(image_path)
+        image_array = np.array(image)
+        height, width = image_array.shape[:2]
+        
+        # Crop the image
+        cropped_image_array = crop_function(image_array)
+        
+        # Show original image
+        axs[0, i].imshow(image_array)
+        axs[0, i].set_title('Original Image')
+        
+        # Highlight the crop area on the original image
+        start_col = width // 8
+        end_col = 7 * width // 8
+        start_row = 0
+        end_row = height // 3
+        rect = patches.Rectangle((start_col, start_row), end_col - start_col, end_row - start_row, 
+                                 linewidth=1, edgecolor='r', facecolor='none')
+        axs[0, i].add_patch(rect)
+        
+        # Show cropped image
+        axs[1, i].imshow(cropped_image_array)
+        axs[1, i].set_title('Cropped Image')
+        
+        # Remove axis ticks
+        axs[0, i].axis('off')
+        axs[1, i].axis('off')
+    
+    plt.tight_layout()
+    plt.show()
+
+# Example usage
+image_paths = ['./images/standing/standing18.jpg', './images/standing/standing19.jpg']
+# show_cropped_images(image_paths, crop_image_for_visualization)
 
 
 # Genrate training data with data augmentation
