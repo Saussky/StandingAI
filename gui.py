@@ -4,6 +4,8 @@ from datetime import timedelta
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 from utils import get_average_standing_duration, get_day_of_week_stats, get_longest_standing_session, get_longest_standing_streak, get_total_standing_days, get_weekly_stats, read_csv_data
 
@@ -57,9 +59,22 @@ def create_gui():
     # Day of Week Stats with Styling
     layout.addWidget(create_heading_label("Day of Week Analysis"))
     day_of_week_stats_data = get_day_of_week_stats(data)
-    for day, stats in day_of_week_stats_data.items():
-        day_name = datetime.datetime(2024, 1, day + 1).strftime('%A')  # Temporary solution to get day name
-        layout.addWidget(create_stat_label(f"{day_name}: {stats['total_minutes']} minutes over {stats['total_sessions']} sessions"))
+
+    day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    total_minutes = [day_of_week_stats_data[day]['total_minutes'] for day in range(7)]
+
+    # Create a matplotlib figure and canvas
+    fig = Figure(figsize=(5, 8), dpi=100)  # Increase the height of the figure
+    canvas = FigureCanvas(fig)
+    canvas.setMinimumSize(600, 400)  # Set the minimum width and height for the canvas
+
+    # Plot the pie chart on the figure
+    ax = fig.add_subplot(111)
+    ax.pie(total_minutes, labels=day_names, autopct='%1.1f%%')
+    ax.set_title('Day of Week Analysis')
+
+    # Add the canvas to the layout with increased stretch factor
+    layout.addWidget(canvas, stretch=1)
 
     window.setLayout(layout)
     window.show()
