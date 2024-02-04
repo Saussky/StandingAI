@@ -1,39 +1,26 @@
-import os
-import shutil
-import numpy as np
-import cv2
 import csv
-import tensorflow as tf
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-
+import cv2
 import datetime
 from datetime import timedelta
 import matplotlib.patches as patches
-from PIL import Image
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import os
+from PIL import Image
+import shutil
+import tensorflow as tf
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
 
 def load_and_preprocess_image(image_path, target_size=(224, 224)):
     img = image.load_img(image_path, target_size=target_size)
     img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)  # Create a batch
-    img_array /= 255.0  # Normalize to [0,1]
+    img_array = crop_image(img_array)
+    img_array = preprocess_image(img_array, target_size)
+    img_array = np.expand_dims(img_array, axis=0) 
     return img_array
 
-def classify_images(model, directory):
-    for file_name in os.listdir(directory):
-        if file_name.lower().endswith(('.png', '.jpg', '.jpeg')):
-            file_path = os.path.join(directory, file_name)
-            img = load_and_preprocess_image(file_path)
-
-            # Predict
-            prediction = model.predict(img)
-            classification = 'Standing' if prediction[0][0] > 0.5 else 'Sitting'
-
-            # Print the result
-            print(f"Image: {file_name} | Prediction: {classification} ({prediction[0][0]})")
 
 def classify_image(model, image_path):
     img = load_and_preprocess_image(image_path)
@@ -41,7 +28,7 @@ def classify_image(model, image_path):
     print('prediction is: ', prediction)
     classification = 'Standing' if prediction[0][0] > 0.5 else 'Sitting'
     
-    if 0.3 < prediction[0][0] < 0.7:
+    if 0.2 < prediction[0][0] < 0.8:
         print('Uncertain prediction, saving image for manual classification')
 
         file_name = os.path.basename(image_path)
@@ -49,6 +36,7 @@ def classify_image(model, image_path):
         shutil.copyfile(image_path, new_file_path)
     
     return classification
+
 
 def capture_image():
     cap = cv2.VideoCapture(0)
@@ -64,6 +52,7 @@ def capture_image():
     cv2.destroyAllWindows()
 
     return image_name
+
 
 def update_csv(date, duration, csv_path='data.csv'):
     fieldnames = ['date', 'standing_duration', 'total_sessions', 'total_standing_minutes']
@@ -107,6 +96,7 @@ def update_csv(date, duration, csv_path='data.csv'):
             }
             writer.writerow(new_row)
 
+
 def read_csv_data(csv_path='data.csv'):
     """
     Read CSV data and return a list of dictionaries.
@@ -121,6 +111,7 @@ def read_csv_data(csv_path='data.csv'):
             data.append(row)
     return data
 
+
 def get_weekly_stats(data, week_start):
     """
     Get total standing minutes and session count for the specified week.
@@ -134,6 +125,7 @@ def get_weekly_stats(data, week_start):
             total_sessions += int(row['total_sessions'])
     return total_minutes, total_sessions
 
+
 def get_average_standing_duration(data):
     """
     Calculate the average standing duration for the specified week.
@@ -145,9 +137,11 @@ def get_average_standing_duration(data):
     average_duration = total_standing_minutes / total_sessions if total_sessions else 0
     return average_duration
 
+
 def get_longest_standing_session(data):
     longest_session = max(data, key=lambda x: int(x['standing_duration'])) if data else None
     return longest_session['standing_duration'] if longest_session else 0
+
 
 def get_total_standing_days(data):
     unique_days = {row['date'] for row in data}
@@ -177,11 +171,10 @@ def get_day_of_week_stats(data):
         day_stats[day_of_week]['total_sessions'] += int(row['total_sessions'])
     return day_stats
 
+
 def is_image_file(filename):
     valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']
     return any(filename.lower().endswith(ext) for ext in valid_extensions)
-
-
 
 
 def crop_image(image_array):
@@ -224,3 +217,39 @@ def crop_and_preprocess_image(image_array, crop_function, preprocess_function, t
     preprocessed_image = preprocess_function(cropped_image, target_size)
     return preprocessed_image
 
+
+def show_and_save_cropped_image(image_path, crop_function, save_dir='./cropped'):
+    """
+    Displays the original and cropped image side by side.
+    Saves the cropped images to the specified save_dir with unique filenames.
+    Args:
+    - image_path: The file path to the image.
+    - crop_function: A function that crops the images.
+    - save_dir: Directory to save the cropped images.
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    image = Image.open(image_path)
+    image_array = np.array(image)
+    cropped_image_array = crop_function(image_array)
+    fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+    axs[0].imshow(image_array)
+    axs[0].set_title('Original Image')
+    height, width = image_array.shape[:2]
+    rect = patches.Rectangle((width // 8, 0), 6 * width // 8, height // 3, linewidth=1, edgecolor='r', facecolor='none')
+    axs[0].add_patch(rect)
+    axs[1].imshow(cropped_image_array)
+    axs[1].set_title('Cropped Image')
+    for ax in axs:
+        ax.axis('off')
+    filename = os.path.splitext(os.path.basename(image_path))[0]
+    save_path = os.path.join(save_dir, f'{filename}_cropped.png')
+    Image.fromarray(cropped_image_array.astype('uint8')).save(save_path)
+    # plt.show()
+    plt.close(fig)
+
+# Loop over images in the sitting and standing directories and process them
+# sitting_dir, standing_dir = './images/sitting', './images/standing'
+# sitting_image_paths = [os.path.join(sitting_dir, f) for f in os.listdir(sitting_dir) if is_image_file(f)]
+# standing_image_paths = [os.path.join(standing_dir, f) for f in os.listdir(standing_dir) if is_image_file(f)]
+# for image_path in sitting_image_paths + standing_image_paths:
+#     show_and_save_cropped_image(image_path, crop_image)
