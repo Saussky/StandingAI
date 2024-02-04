@@ -3,7 +3,10 @@ import shutil
 import numpy as np
 import cv2
 import csv
+import tensorflow as tf
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+
 import datetime
 from datetime import timedelta
 import matplotlib.patches as patches
@@ -174,52 +177,50 @@ def get_day_of_week_stats(data):
         day_stats[day_of_week]['total_sessions'] += int(row['total_sessions'])
     return day_stats
 
-def crop_top_middle(image_array):
+def is_image_file(filename):
+    valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff']
+    return any(filename.lower().endswith(ext) for ext in valid_extensions)
+
+
+
+
+def crop_image(image_array):
     """
-    There is a mark on my wall only visible when desk is in standing position, this captures that general area.
-    It returns only the cropped area, making the job easier for the model.
+    Crop the image to focus on the specific area of interest.
+    Args:
+    - image_array: The image array (NumPy array).
+    Returns:
+    - The cropped image array (NumPy array).
     """
     height, width = image_array.shape[:2]
-    start_row = 0
-    start_col = width // 8
-    end_row = height // 3
-    end_col = 2 * width // 4
+    start_row, start_col = 0, width // 8
+    end_row, end_col = height // 3, 7 * width // 8
     return image_array[start_row:end_row, start_col:end_col, :]
 
+def preprocess_image(image_array, target_size=(224, 224)):
+    """
+    Resize image to the target size and apply MobileNetV2 preprocessing.
+    Args:
+    - image_array: The cropped image array (NumPy array).
+    - target_size: The target size to resize the image after cropping.
+    Returns:
+    - A NumPy array of the preprocessed image.
+    """
+    image_array = image_array.astype('float32')
+    resized_image = tf.image.resize(image_array, target_size)
+    return preprocess_input(resized_image)
 
-def show_scrop_top_middle():
-    # Load your images
-    image_path1 = './images/standing/standing18.jpg'
-    image_path2 = './images/standing/standing19.jpg'
-    image1 = Image.open(image_path1)
-    image2 = Image.open(image_path2)
-    image_array1 = np.array(image1)
-    image_array2 = np.array(image2)
-    height1, width1 = image_array1.shape[:2]
-    height2, width2 = image_array2.shape[:2]
 
-    # Crop the images
-    cropped_image_array1 = crop_top_middle(image_array1)
-    cropped_image_array2 = crop_top_middle(image_array2)
+def crop_and_preprocess_image(image_array, crop_function, preprocess_function, target_size=(224, 224)):
+    """
+    Crop and preprocess the image for MobileNetV2.
+    Args:
+    - image_array: The image array (NumPy array).
+    - target_size: The target size to resize the image after cropping.
+    Returns:
+    - A NumPy array of the preprocessed image.
+    """
+    cropped_image = crop_function(image_array)
+    preprocessed_image = preprocess_function(cropped_image, target_size)
+    return preprocessed_image
 
-    # Visualize the crops
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
-    # Original images with the crop areas marked
-    ax1.imshow(image_array1)
-    rect1 = patches.Rectangle((width1 // 4, 0), width1 // 2, height1 // 2, linewidth=1, edgecolor='r', facecolor='none')
-    ax1.add_patch(rect1)
-    ax1.set_xlim(0, width1)
-    ax1.set_ylim(height1, 0)  # Reverse the y-axis
-
-    ax2.imshow(image_array2)
-    rect2 = patches.Rectangle((width2 // 4, 0), width2 // 2, height2 // 2, linewidth=1, edgecolor='r', facecolor='none')
-    ax2.add_patch(rect2)
-    ax2.set_xlim(0, width2)
-    ax2.set_ylim(height2, 0)  # Reverse the y-axis
-
-    # Cropped images
-    fig, (ax3, ax4) = plt.subplots(1, 2, figsize=(12, 6))
-    ax3.imshow(cropped_image_array1)
-    ax4.imshow(cropped_image_array2)
-
-    plt.show()
