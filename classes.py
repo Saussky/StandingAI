@@ -2,8 +2,8 @@ import os
 import time
 from datetime import datetime
 from gui import create_gui
-from utils import capture_image, classify_image, update_csv
-from model import model
+from utils import capture_image, classify_image, classify_image_pytorch, update_csv
+from model_pytorch import model
 
 # TODO: If prediction goes from standing - sitting - standiing, it's likely the middle prediction is wrong.
 
@@ -16,7 +16,12 @@ class JobState:
         try:
             img_name = capture_image()
             current_time = time.time()
-            classification = classify_image(model, img_name)
+            
+            # Tensorflow model
+            # classification = classify_image(model, img_name)
+            
+            # Pytorch model
+            classification = classify_image_pytorch(model, capture_image(), device="cpu")
 
             print(f'You are : {classification}')
 

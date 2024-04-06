@@ -6,3 +6,5 @@ to_sort/*
 images/sitting/*
 images/standing/*
 cropped/*
+*.jpg
+
