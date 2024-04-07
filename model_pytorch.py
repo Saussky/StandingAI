@@ -1,4 +1,3 @@
-import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,6 +9,7 @@ from utils import crop_and_preprocess_image_pil, crop_image_pil, preprocess_imag
 
 
 ## Data loading and preprocessing
+
 base_dir = "./images"
 
 # Define transformations including data augmentation
@@ -41,6 +41,7 @@ val_dataset = Subset(dataset, val_idx)
 train_loader = DataLoader(train_dataset, batch_size=5, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
 
+
 ## Model definition
 
 # Load pre-trained MobileNetV2
@@ -57,15 +58,15 @@ mobilenet.classifier = nn.Sequential(
     nn.Sigmoid(),
 )
 
-model = mobilenet.to(torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = mobilenet.to(device)
+
 
 ## Training
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 criterion = nn.BCELoss()
 optimizer = optim.Adam(model.classifier.parameters(), lr=0.001)
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
-
 
 def train_model(
     model,
