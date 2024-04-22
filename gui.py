@@ -6,8 +6,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-
-from utils import get_average_standing_duration, get_day_of_week_stats, get_longest_standing_session, get_longest_standing_streak, get_total_standing_days, get_weekly_stats, read_csv_data
+from utils_csv import get_average_standing_duration, get_day_of_week_stats, get_longest_standing_session, get_longest_standing_streak, get_total_standing_days, get_weekly_stats, read_csv_data
 
 def create_heading_label(text):
     label = QLabel(text)
@@ -80,7 +79,7 @@ def create_gui():
     window.show()
     sys.exit(app.exec_())
 
-if __name__ == '__main__':
-    create_gui()
+# if __name__ == '__main__':
+#     create_gui()
 
-create_gui()
+# create_gui()
