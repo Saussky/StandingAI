@@ -20,7 +20,7 @@ class JobState:
             current_time = time.time()
             
             # Tensorflow model
-            # classification = classify_image(modelPT, img_name)
+            # classification = classify_image(modelTF, img_name)
             
             # Pytorch model
             classification = classify_image_pytorch(modelPT, capture_image(), device="cpu")

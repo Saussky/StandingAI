@@ -100,7 +100,7 @@ def train_model(
             running_loss += loss.item() * inputs.size(0)
             running_corrects += torch.sum(preds == labels.data)
 
-        scheduler.step()  # Adjust the learning rate based on the scheduling policy
+        scheduler.step()
 
         epoch_loss = running_loss / len(train_loader.dataset)
         epoch_acc = running_corrects.double() / len(train_loader.dataset)
@@ -141,3 +141,50 @@ train_model(
     device,
     num_epochs=20,
 )
+
+
+# import torch
+# from torchvision import transforms
+# from PIL import Image
+# import matplotlib.pyplot as plt
+# from utils import crop_and_preprocess_image_pil, crop_image_pil, preprocess_image_pil
+
+
+# def visualize_preprocessed_images(
+#     image_path, crop_function, preprocess_function, target_size=(224, 224)
+# ):
+#     """
+#     Load an image, preprocess it using the specified functions, and visualize the preprocessed image.
+#     Args:
+#     - image_path: Path to the image file.
+#     - crop_function: Function to crop the image.
+#     - preprocess_function: Function to preprocess the image (after cropping).
+#     - target_size: The target size for preprocessing.
+#     """
+#     # Load the image
+#     image = Image.open(image_path).convert("RGB")
+
+#     # Apply the preprocessing directly as done in the transform
+#     preprocessed_img_tensor = crop_and_preprocess_image_pil(
+#         image, crop_function, preprocess_function, target_size
+#     )
+
+#     # Convert the preprocessed tensor back to a PIL image for visualization
+#     # This step correctly handles the tensor without assuming an incorrect shape
+#     unloader = transforms.ToPILImage()
+#     image_pil = unloader(
+#         preprocessed_img_tensor.squeeze(0)
+#     )  # Remove batch dimension if present
+
+#     # Display the image
+#     plt.imshow(image_pil)
+#     plt.title("Preprocessed Image")
+#     plt.axis("off")
+#     plt.show()
+
+
+# # Example usage with a specific image and preprocessing functions
+# image_path = "./images/standing/standing2.jpg"  # Adjust the path to an actual image
+# visualize_preprocessed_images(
+#     image_path, crop_image_pil, preprocess_image_pil, target_size=(224, 224)
+# )

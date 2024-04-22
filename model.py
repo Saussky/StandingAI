@@ -42,9 +42,9 @@ for layer in base_model.layers:
 
 model = models.Sequential([
     base_model,
-    layers.GlobalAveragePooling2D(),  # Add global average pooling layer
+    layers.GlobalAveragePooling2D(),
     layers.Dense(64, activation='relu'),
-    layers.Dense(1, activation='sigmoid')  # Sigmoid for binary classification
+    layers.Dense(1, activation='sigmoid')
 ])
 
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])

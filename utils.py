@@ -160,68 +160,75 @@ def show_and_save_cropped_image(image_path, crop_function, save_dir="./cropped")
     plt.close(fig)
 
 
-def crop_image_pil(image, save_cropped=False):
-    """
-    Crop the image to focus on the specific area of interest and optionally save it.
-    Args:
-    - image: The image as a PIL Image.
-    - save_cropped: Boolean indicating whether to save the cropped image.
-    Returns:
-    - The cropped image as a PIL Image.
-    """
-    width, height = image.size
-    start_row, start_col = 0, width // 8
-    end_row, end_col = height // 3, 7 * width // 8
-    cropped_image = image.crop((start_col, start_row, end_col, end_row))
-
-    if save_cropped:
-        # Ensure the ./cropped directory exists
-        os.makedirs("./cropped", exist_ok=True)
-        # Generate a timestamped filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"./cropped/cropped_{timestamp}.jpg"
-        # Save the cropped image
-        cropped_image.save(filename)
-        print(f"Cropped image saved to {filename}")
-
-    return image
-
-
-# def crop_image_pil(image):
+# def crop_image_pil(image, save_cropped=False):
 #     """
-#     Crop the image to keep only the top 1/3rd of the photo vertically,
-#     while retaining the entire width horizontally.
+#     Crop the image to focus on the specific area of interest and optionally save it.
 #     Args:
 #     - image: The image as a PIL Image.
+#     - save_cropped: Boolean indicating whether to save the cropped image.
 #     Returns:
 #     - The cropped image as a PIL Image.
 #     """
 #     width, height = image.size
-#     new_height = height // 3
-#     cropped_image = image.crop((0, 0, width, new_height))
-#     # save_cropped_image(cropped_image)
+#     start_row, start_col = 0, width // 8
+#     end_row, end_col = height // 3, 7 * width // 8
+#     cropped_image = image.crop((start_col, start_row, end_col, end_row))
+
+#     if save_cropped:
+#         # Ensure the ./cropped directory exists
+#         os.makedirs("./cropped", exist_ok=True)
+#         # Generate a timestamped filename
+#         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+#         filename = f"./cropped/cropped_{timestamp}.jpg"
+#         # Save the cropped image
+#         cropped_image.save(filename)
+#         print(f"Cropped image saved to {filename}")
+
 #     return cropped_image
+
+
+def crop_image_pil(image, save_cropped=False, skip_crop=False):
+    """
+    Crop the image to keep only the top 1/3rd of the photo vertically,
+    while retaining the entire width horizontally.
+    Args:
+    - image: The image as a PIL Image.
+    - save_cropped: Save image to disk if True.
+    Returns:
+    - The cropped image as a PIL Image.
+    """
+    if skip_crop:
+        return image
+    
+    width, height = image.size
+    new_height = height // 3
+    cropped_image = image.crop((0, 0, width, new_height))
+    if save_cropped:
+        save_cropped_image(cropped_image)
+    return cropped_image
 
 
 def preprocess_image_pil(image, target_size=(224, 224)):
     """
-    Resize image to the target size.
+    Resize image to the target size without cropping.
     Args:
     - image: The cropped image as a PIL Image.
     - target_size: The target size to resize the image.
     Returns:
     - A PIL image of the resized image.
     """
-    # Resize image using ImageOps.fit for better control over output
-    image_resized = ImageOps.fit(image, target_size, Image.Resampling.LANCZOS)
+    # Resize image without cropping, may change aspect ratio
+    # image_resized = image.resize(target_size, Image.Resampling.LANCZOS)
+    
     # Convert to tensor and normalize
     transform = transforms.Compose(
         [
+            transforms.Resize(target_size),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
-    return transform(image_resized)
+    return transform(image)
 
 
 def crop_and_preprocess_image_pil(
@@ -235,7 +242,7 @@ def crop_and_preprocess_image_pil(
     Returns:
     - A tensor of the preprocessed image.
     """
-    cropped_image = crop_function(image)
+    cropped_image = crop_function(image, False, True)
     preprocessed_image = preprocess_function(cropped_image, target_size)
     return preprocessed_image
 
@@ -245,24 +252,15 @@ def load_and_preprocess_image_pil(image_path, target_size=(224, 224)):
     Load an image file and apply preprocessing steps compatible with the trained model.
     This function assumes that the image file is a standard format that PIL can open (like JPG).
     """
-    # Load the image from disk into a PIL Image
     image = Image.open(image_path).convert("RGB")
 
-    # Define the transformation sequence
     transform = transforms.Compose(
         [
-            # Include your cropping and preprocessing steps here, adjusting as necessary
-            transforms.Resize(target_size),  # Resize the image to the target size
-            transforms.ToTensor(),  # Convert the PIL Image to a tensor
-            transforms.Normalize(
-                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-            ),  # Normalize the image
+            transforms.Lambda(lambda x: crop_and_preprocess_image_pil(x, crop_image_pil, preprocess_image_pil, target_size=target_size)),
         ]
     )
-
-    # Apply the transformations to the image
+    
     img_tensor = transform(image)
-
     return img_tensor.unsqueeze(0)  # Add a batch dimension
 
 
@@ -274,8 +272,9 @@ def classify_image_pytorch(model, image_path, device):
         outputs = model(img_tensor)
         prediction = torch.sigmoid(
             outputs
-        )  # Apply sigmoid to convert outputs to probabilities
-        prediction = prediction.item()  # Convert to single Python number
+        )
+        print('predict', prediction)
+        prediction = prediction.item()
 
     print("Prediction score:", prediction)
     classification = "Standing" if prediction > 0.5 else "Sitting"
