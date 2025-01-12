@@ -1,7 +1,7 @@
 # AI-Powered Standing Desk Tracker
 
 ## Introduction
-This project aims to promote a healthier working environment by tracking the amount of time spent standing at a desk. It employs a basic AI image recognition system using MobileNetV2 as the base model, enhanced with a custom-trained layer for distinguishing between sitting and standing postures.
+This project aims to promote a healthier working environment by tracking the amount of time spent standing at a desk. It employs a basic AI image recognition system using MobileNetV2 as the base model, enhanced with a custom-trained layer for distinguishing between sitting and standing positions.
 
 ## Setup
 ### Prerequisites
